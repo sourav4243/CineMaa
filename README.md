@@ -1,33 +1,26 @@
-# Movie Recommendation system in python
+# Movie Recommendation System in Python
 
 ## Overview
 
-This project is a Movie Recommendation System built using Python. It leverages various machine learning algorithms to suggest movies to users based on their preferences and viewing history.
+This project is a Movie Recommendation System built using Python. It leverages content-based filtering to suggest movies to users based on the similarity of movie attributes such as genres, plot, directors, and stars.
 
 ## Features
 
-- **User-based Collaborative Filtering**: Recommends movies based on the similarity between users.
-- **Item-based Collaborative Filtering**: Recommends movies based on the similarity between items (movies).
-- **Content-based Filtering**: Recommends movies based on the content similarity (genres, actors, directors, etc.).
-- **Hybrid Filtering**: Combines multiple recommendation strategies to improve accuracy.
+- **Content-based Filtering**: Recommends movies based on the content similarity (genres, plot, directors, stars).
+- **Stemming**: Uses PorterStemmer to reduce words to their root form for better similarity matching.
+- **Cosine Similarity**: Calculates the similarity between movies using cosine similarity on vectorized movie tags.
+- **Caching**: Caches the similarity matrix to improve performance on subsequent runs.
 
 ## Installation
 
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/yourusername/movierecommendation.git
-    cd movierecommendation
+    git clone https://github.com/Sourav4243/CineMaa.git
+    cd CineMaa
     ```
 
-2. Create a virtual environment and activate it:
-
-    ```sh
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-
-3. Install the required dependencies:
+2. Install the required dependencies:
 
     ```sh
     pip install -r requirements.txt
@@ -36,38 +29,47 @@ This project is a Movie Recommendation System built using Python. It leverages v
 ## Usage
 
 1. Prepare the dataset:
-    - Ensure you have a dataset of movies and user ratings. You can use datasets like [MovieLens](https://grouplens.org/datasets/movielens/).
+    - Ensure you have the dataset `Top_10000_Movies_IMDb.csv` in the `data` directory.
 
-2. Preprocess the data:
-    - Run the preprocessing script to clean and prepare the data for training.
-
-    ```sh
-    python preprocess.py
-    ```
-
-3. Train the model:
-    - Train the recommendation model using the prepared data.
+2. Run the recommendation script:
+    - Use the script to generate movie recommendations.
 
     ```sh
-    python train.py
-    ```
-
-4. Generate recommendations:
-    - Use the trained model to generate movie recommendations for a user.
-
-    ```sh
-    python recommend.py --user_id <USER_ID>
+    python src/main.py
     ```
 
 ## Project Structure
 
-- `data/`: Contains the dataset files.
-- `preprocess.py`: Script for data preprocessing.
-- `train.py`: Script for training the recommendation model.
-- `recommend.py`: Script for generating recommendations.
-- `models/`: Contains the trained models.
-- `notebooks/`: Jupyter notebooks for exploratory data analysis and model experimentation.
-- `requirements.txt`: List of dependencies.
+- `data/`: Contains the dataset file.
+  - `Top_10000_Movies_IMDb.csv`: The dataset file containing movie information.
+- `src/`: Contains the source code.
+  - `main.py`: The main script for preprocessing the data and generating recommendations.
+- `README.md`: Provides an overview of the project, installation instructions, usage, etc.
+- `requirements.txt`: Lists the dependencies required to run the project.
+- `LICENSE`: Specifies the license under which the project is distributed.
+
+## How It Works
+
+1. **Data Loading**:
+    - The dataset is loaded using pandas.
+
+2. **Data Preprocessing**:
+    - Relevant columns are selected.
+    - String representations of lists are converted to actual lists.
+    - Spaces are removed from names in the `Directors`, `Stars`, and `Genre` columns.
+    - A `tags` column is created by combining `Genre`, `Plot`, `Directors`, and `Stars`.
+    - The tags are joined into a single string and converted to lowercase.
+    - Words in the tags are stemmed using PorterStemmer.
+
+3. **Vectorization**:
+    - The tags are converted to vectors using `CountVectorizer`.
+
+4. **Similarity Calculation**:
+    - Cosine similarity is calculated between the vectors.
+    - The similarity matrix is cached to improve performance on subsequent runs.
+
+5. **Recommendation**:
+    - The `recommend` function takes a movie name as input and prints the top 5 similar movies based on cosine similarity.
 
 ## Contributing
 
@@ -75,10 +77,10 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Acknowledgements
 
-- [MovieLens](https://grouplens.org/datasets/movielens/) for providing the dataset.
 - [Scikit-learn](https://scikit-learn.org/) for the machine learning algorithms.
 - [Pandas](https://pandas.pydata.org/) and [NumPy](https://numpy.org/) for data manipulation and analysis.
+- [NLTK](https://www.nltk.org/) for natural language processing tools.

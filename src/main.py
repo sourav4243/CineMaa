@@ -4,9 +4,11 @@ import ast
 from nltk.stem import PorterStemmer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.decomposition import TruncatedSVD
+import os
 
 # Load the dataset
-movies = pd.read_csv('Top_10000_Movies_IMDb.csv')
+movies = pd.read_csv('./data/Top_10000_Movies_IMDb.csv')
 
 # Select relevant columns
 movies = movies[['Movie Name', 'Genre', 'Plot', 'Directors', 'Stars', 'Rating']]
@@ -18,70 +20,66 @@ def convertStringToList(obj):
     except (ValueError, SyntaxError):
         return []
 
-# Apply the conversion function to 'Stars' and 'Directors' columns
 movies['Stars'] = movies['Stars'].apply(convertStringToList)
 movies['Directors'] = movies['Directors'].apply(convertStringToList)
 
-# Function to return the first name in a list
 def returnFirstName(obj):
     if isinstance(obj, list) and obj:
         return [obj[0]]
     return []
 
-# Apply the function to 'Directors' column
 movies['Directors'] = movies['Directors'].apply(returnFirstName)
 
-# Split 'Plot' into words
+# Splitting Plot into words
 movies['Plot'] = movies['Plot'].apply(lambda x: x.split() if isinstance(x, str) else [])
 
 # Remove spaces in between names in 'Directors', 'Stars', and 'Genre'
 movies['Directors'] = movies['Directors'].apply(lambda x: [i.replace(" ", "") for i in x])
 movies['Stars'] = movies['Stars'].apply(lambda x: [i.replace(" ", "") for i in x])
 
-# Function to convert comma-separated string to list
+# Function to convert comma-separated string to list for the genre column
 def convertList(obj):
     if isinstance(obj, str):
         return [i.strip() for i in obj.split(',')]
     return []
 
-# Apply the conversion function to 'Genre' column
 movies['Genre'] = movies['Genre'].apply(convertList)
-
-# Remove spaces in between genre names
 movies['Genre'] = movies['Genre'].apply(lambda x: [i.replace(" ", "") for i in x])
 
-# Create 'tags' column by combining 'Genre', 'Plot', 'Directors', and 'Stars'
+# Create 'tags' column for similarity calculation
 movies['tags'] = movies['Genre'] + movies['Plot'] + movies['Directors'] + movies['Stars']
 
 # Create a new DataFrame with 'Movie Name' and 'tags'
-newData = movies[['Movie Name', 'tags']]
+newData = movies[['Movie Name', 'tags']].copy()
 
-# Join the list of tags into a single string and convert to lowercase
-newData['tags'] = newData['tags'].apply(lambda x: " ".join(x).lower())
+newData.loc[:, 'tags'] = newData['tags'].apply(lambda x: " ".join(x).lower())
 
-# Initialize PorterStemmer
 ps = PorterStemmer()
-
-# Function to stem words
 def stem(text):
     y = []
     for i in text.split():
         y.append(ps.stem(i))
     return " ".join(y)
 
-# Apply stemming to 'tags' column
-newData['tags'] = newData['tags'].apply(stem)
-
-# Initialize CountVectorizer
+newData.loc[:, 'tags'] = newData['tags'].apply(stem)
 cv = CountVectorizer(max_features=5000, stop_words='english')
 
 # Convert 'tags' to vectors
 vectors = cv.fit_transform(newData['tags']).toarray()
 
-# Calculate cosine similarity
-similarity = cosine_similarity(vectors)
+# Check if the similarity matrix is already cached
+similarity_cache_file = 'similarity_matrix.npy'
 
-# Function to recommend movies
+if os.path.exists(similarity_cache_file):
+    similarity = np.load(similarity_cache_file)
+else:
+    # Dimensionality reduction using TruncatedSVD
+    svd = TruncatedSVD(n_components=100)
+    reduced_vectors = svd.fit_transform(vectors)
+    similarity = cosine_similarity(reduced_vectors)
+    np.save(similarity_cache_file, similarity)
+
+# Main function to recommend movies
 def recommend(movie):
     movie_index = newData[newData['Movie Name'] == movie].index[0]
     distances = similarity[movie_index]
@@ -89,9 +87,14 @@ def recommend(movie):
     for i in movies_list:
         print(newData.iloc[i[0]]['Movie Name'])
 
-# Example usage
-if __name__ == "__main__":
-    print("Recommendations for 'The Godfather':")
-    recommend('The Godfather')
-
-
+while True:
+    movie = input("Enter the movie name: ")
+    try:
+        recommend(movie)
+    except:
+        print("Movie not found in the dataset")
+    print()
+    print("Do you want to continue? (y/n)")
+    choice = input()
+    if choice.lower() != 'y':
+        break
