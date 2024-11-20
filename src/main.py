@@ -4,7 +4,6 @@ import ast
 from nltk.stem import PorterStemmer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.decomposition import TruncatedSVD
 import os
 
 # Load the dataset
@@ -73,10 +72,7 @@ similarity_cache_file = 'similarity_matrix.npy'
 if os.path.exists(similarity_cache_file):
     similarity = np.load(similarity_cache_file)
 else:
-    # Dimensionality reduction using TruncatedSVD
-    svd = TruncatedSVD(n_components=100)
-    reduced_vectors = svd.fit_transform(vectors)
-    similarity = cosine_similarity(reduced_vectors)
+    similarity = cosine_similarity(vectors)
     np.save(similarity_cache_file, similarity)
 
 # Main function to recommend movies
