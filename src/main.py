@@ -95,6 +95,7 @@ while True:
         print("Movie not found in the dataset")
     print()
     print("Do you want to continue? (y/n)")
+    print()
     choice = input()
     if choice.lower() != 'y':
         break
