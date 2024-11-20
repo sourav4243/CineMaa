@@ -80,12 +80,16 @@ else:
     np.save(similarity_cache_file, similarity)
 
 # Main function to recommend movies
-def recommend(movie):
-    movie_index = newData[newData['Movie Name'] == movie].index[0]
-    distances = similarity[movie_index]
+def recommend(movieName):
+    if movieName not in newData['Movie Name'].values:
+        print(f"Movie '{movieName}' not found in database.")
+        return
+    movieIndex = newData[newData['Movie Name'] == movieName].index[0]
+    distances = similarity[movieIndex]
     movies_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
     for i in movies_list:
         print(newData.iloc[i[0]]['Movie Name'])
+    print()
 
 while True:
     movie = input("Enter the movie name: ")
